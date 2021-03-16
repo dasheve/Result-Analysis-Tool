@@ -9,7 +9,6 @@ from matplotlib import cm
 import matplotlib.patches as mpatches
 import math
 import pdfplumber
-import tabula
 import re
 
 def getdetails(crs,year,part,clg):
@@ -23,7 +22,7 @@ def getdetails(crs,year,part,clg):
     
     else:
         return ["invalid college name"]
-    
+
 def studentreport(Df,rollno,sem=0):
     plt.close()
     DF = Df.loc[rollno,]
@@ -41,7 +40,7 @@ def studentreport(Df,rollno,sem=0):
         res["percplot"]=fig
         if DF['Result'].notnull().any():
             res["ER"]=','.join(DF[DF['Result'].fillna("0").str.startswith('ER')]['Result'].str.cat().split('ER -'))
-            res['Fail']=False
+        res['Fail']=False
     else :
         a4_dims = (9.5, 4)
         fig, ax = pyplot.subplots(figsize=a4_dims)
@@ -52,7 +51,7 @@ def studentreport(Df,rollno,sem=0):
         res["plot"].set_xlim(0,10)
         res["plot"].set(xlabel='Grade Points', ylabel='Subject Code')
     return res
-
+ 
 def get_studentReport(crs,year,part,clg,rollno):
    Df=pd.ExcelFile(""+crs+str(year)+str(part)+".xlsx" ,engine='openpyxl' ).parse(clg,index_col=[0,1])
    #Df['Roll No']=Df['Roll No'].replace({" ":np.nan, "":np.nan}).fillna(method='ffill')
@@ -67,10 +66,14 @@ def get_studentReport(crs,year,part,clg,rollno):
 
 def get_subw(Df,year):
     plt.close()
+    print(Df)
     DF=Df.xs(year*2-1,level=1).append(Df.xs(year*2,level=1))
     SubW=pd.DataFrame()
     for i,j in zip(DF.columns[DF.columns.str.startswith("Sub")],DF.columns[DF.columns.str.startswith("GP")]):
-         SubW=pd.concat([SubW,DF.groupby(i)[j].mean()])
+         try:
+             SubW=pd.concat([SubW,DF.groupby(i)[j].mean()])
+         except:
+             return {"DataError":['Quite Possible that one the GP columns have wrong data in this particular sheet. Please proceed to changes accordingly.']}
     SubW=SubW.reset_index()
     SubW=SubW.groupby('index').mean().squeeze().sort_values()
     SubW.dropna(inplace=True)
@@ -84,13 +87,13 @@ def get_subw(Df,year):
     ax.set_xticklabels(SubW.index.astype(str).str.upper(), rotation=60, fontdict={'horizontalalignment': 'right', 'size':12})
     ax.set_ylim(0, 10)
     return ax
-
-
+ 
+ 
 def getcourse(crs,year,part,clg):
     src=""+crs+str(year)+str(part)+".xlsx"
     xls=pd.ExcelFile(src, engine="openpyxl")
     if clg in xls.sheet_names:
-        Df=xls.parse(clg,index_col=[0,1])
+        Df=xls.parse(clg,index_col=[0,2])
     else:
         return ["invalid college name"]
     res=dict()
@@ -98,8 +101,13 @@ def getcourse(crs,year,part,clg):
     for _,value in Df[Df.columns[Df.columns.str.startswith("Sub")]].iteritems():
         Df[value.name]=Df[value.name].astype(str).str.slice(0,8)
     res['Sub_W']=dict()
-    for i in range(1,4):
-         res['Sub_W'][i]=get_subw(Df,i)
+    for i in range(1,part+1):
+         subw=get_subw(Df,i)
+         if type(subw)==dict:
+              print(type(subw))
+              return subw
+         else:
+              res['Sub_W'][i]=subw
     SubW=pd.DataFrame([],columns=['Roll No','Name','FirstYear','SecondYear','ThirdYear','Total'])
     for _, value in Df.groupby(level="Roll No"):
         DF=value['SGPA'].squeeze()
@@ -127,7 +135,7 @@ def getcourse(crs,year,part,clg):
     return res
 
 def get_rank(crs,year,part=3,clg=None,campus='All'):
-     src=crs+str(year)+str(part)+"rank.xlsx"
+     src=''+crs+str(year)+str(part)+"rank.xlsx"
      Df=pd.read_excel(src,sheet_name=campus,index_col=[0,1])
      res=dict()
      plt.close()
@@ -158,8 +166,70 @@ def get_rank(crs,year,part=3,clg=None,campus='All'):
      plt.close()
      res["df"]=Df
      return res
- 
- 
+def create_rank(crs,year,sem):
+     src=""+crs+str(year)+str(sem)+".xlsx"
+     Df=pd.concat(pd.read_excel(src,sheet_name=None, engine="openpyxl"),axis=0)
+     Df["GR.CGPA"]=np.nan
+     for _,i in Df[Df['Name'].notnull()].iterrows():
+          hee=Df.index.get_loc(i.name)
+          
+          hehe=Df.columns.get_loc("GR.CGPA")
+          DF=Df.iloc[hee:hee+(sem*2)]
+          #print(DF["Roll No"].astype(str))
+          Df.iloc[hee,hehe]=DF['CGPA'].mean()
+     Df=Df[Df.Name.notnull()][['Roll No','Name','GR.CGPA']].sort_values("GR.CGPA",ascending=False)
+     North=('Bhagini Nivedita College',
+            'Hans Raj College',
+            'Hindu College',
+            'Kalindi College',
+            'Keshav Mahavidyalaya',
+            'Kirori Mal College',
+            'Maharaja Agrasen College',
+            'Miranda House ',
+            'Rajdhani College',
+            'Ramjas College ',
+            'S.G.T.B. Khalsa College',
+            'Shivaji College ',
+            'Shyam Lal College (Day)',
+            'St. Stephens College',
+            'Swami Shraddhanand College',
+            'Zakir Husain Delhi College (Day',
+            'I.P.College For Women',
+            'Keshav Mahavidyalaya',
+            'Shyama Prasad Mukherjee College',
+            'Sri Guru Gobind Singh College',)
+     
+     South=('Acharya Narendra Dev College',
+            'Atma Ram Sanatan Dharam College',
+            'Deen Dayal Upadhyaya College',
+            'Deshbandhu College (Day) ',
+            'Dyal Singh College (Day)',
+            'Gargi College',
+            'Maitreyi College   ',
+            'Moti Lal Nehru College (Day) ',
+            'Sri Aurobindo College (Day)',
+            'Bhaskaracharya College of Appli',
+            'College Of Vocational Studies',
+            'Ramanujan College',
+            'P.G.D.A.V. College (Day)',
+            'Ram Lal Anand College (Day)',
+            'Aryabhatta College Formerly Ram',
+            'Shaheed Rajguru College of Appl',
+            'Shaheed Sukhdev College of Busi')
+     print(Df)                          
+     writer=pd.ExcelWriter(""+crs+str(year)+str(sem)+"rank.xlsx")
+     for i in ("All","South","North"):
+         if i == "South":
+             DF=Df[np.in1d(Df.index.get_level_values(0),South)]
+         elif i=="North":
+             DF=Df[np.in1d(Df.index.get_level_values(0),North)]
+         else :
+             DF=Df 
+         DF=DF.iloc[:100]
+         DF=DF.assign(Rank=range(1,101))
+         DF.to_excel(writer,sheet_name=i)
+     writer.save()
+
 ts={
     'vertical_strategy': 'text',
     "horizontal_strategy": 'text',
@@ -178,7 +248,7 @@ ts={
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
 }
- 
+
 def pdfupload(crs,year,part,path):
     res=dict()
     roll=''
@@ -297,11 +367,10 @@ def pdfupload(crs,year,part,path):
                  
     wb.save(file2)
     print('Written to excel successfully')
-
+ 
     res=columns(file2)
-
     coll=list() 
-    college_file1=open("Files/Colleges.txt","r+")
+    college_file1=open("Colleges.txt","r+")
     lines=college_file1.readlines()
     coll=[i.strip() for i in lines]
     for i in getdetails(crs, year, part, ""):
@@ -310,14 +379,14 @@ def pdfupload(crs,year,part,path):
     colls=[i+"\n" for i in coll]
     colls[-1]=colls[-1].strip()
     college_file1.close()
-    colleg=open("Files/Colleges.txt","w")
+    colleg=open("Colleges.txt","w")
     for i in colls:
         colleg.write(i)
     colleg.close()
     
     
     course=list()
-    course_file=open("Files/Courses.txt", "r+")
+    course_file=open("Courses.txt", "r+")
     line=course_file.readlines()
     course=[i.strip() for i in line]
     if crs not in course: 
@@ -325,15 +394,18 @@ def pdfupload(crs,year,part,path):
     courses=[i+"\n" for i in course]
     courses[-1]=courses[-1].strip()
     course_file.close()
-    cou=open("Files/Courses.txt", "w")
+    cou=open("Courses.txt", "w")
     for i in courses:
         cou.write(i)
     cou.close()
-    #  create_rank(crs,year,part)
+    try:
+        create_rank(crs,year,part)
+    except TypeError:
+        res['TypeError']=['Some the columns might have merged togethe','The SGPA Row might have wrong data','Please Ensure the credibility of the data before further use']
+        
     if not bool(res):
         res['result']=["Successfully uploaded files"]
     return res
-    
 
 def columns(path):
     dict1=dict()
@@ -344,7 +416,7 @@ def columns(path):
             b=df.columns
             #print("the sheet "+i+"there is :")
             b=list(b)
-            ls="Roll No	SEM	Name	Sub	GR	GP	CRP	Sub.1	GR.1	GP.1	CRP.1	Sub.2	GR.2	GP.2	CRP.2	Sub.3	GR.3	GP.3	CRP.3	Sub.4	GR.4	GP.4	CRP.4	TOT CR	TOT CRP	SGPA	CGPA	Result	GR.CGPA	DIV"
+            ls="Roll No SEM Name    Sub GR  GP  CRP Sub.1   GR.1    GP.1    CRP.1   Sub.2   GR.2    GP.2    CRP.2   Sub.3   GR.3    GP.3    CRP.3   Sub.4   GR.4    GP.4    CRP.4   TOT CR  TOT CRP SGPA    CGPA    Result  GR.CGPA DIV"
             a=ls.split("\t")
             dict1[i]=check_column_name(a, b)
     return dict1
@@ -356,67 +428,3 @@ def check_column_name(a,b):
             #print("Column "+i+" is missing from the sheet.")
             list1.append(i)
     return list1
-
-def create_rank(crs,year,sem):
-     src=""+crs+str(year)+str(sem)+".xlsx"
-     Df=pd.concat(pd.read_excel(src,sheet_name=None, engine="openpyxl"),axis=0)
-     Df["GR.CGPA"]=np.nan
-     for _,i in Df[Df['Name'].notnull()].iterrows():
-          hee=Df.index.get_loc(i.name)
-          
-          hehe=Df.columns.get_loc("GR.CGPA")
-          DF=Df.iloc[hee:hee+(sem*2)]
-          #print(DF["Roll No"].astype(str))
-          Df.iloc[hee,hehe]=DF['CGPA'].mean()
-     Df=Df[Df.Name.notnull()][['Roll No','Name','GR.CGPA']].sort_values("GR.CGPA",ascending=False)
-     North=('Bhagini Nivedita College',
-            'Hans Raj College',
-            'Hindu College',
-            'Kalindi College',
-            'Keshav Mahavidyalaya',
-            'Kirori Mal College',
-            'Maharaja Agrasen College',
-            'Miranda House ',
-            'Rajdhani College',
-            'Ramjas College ',
-            'S.G.T.B. Khalsa College',
-            'Shivaji College ',
-            'Shyam Lal College (Day)',
-            'St. Stephens College',
-            'Swami Shraddhanand College',
-            'Zakir Husain Delhi College (Day',
-            'I.P.College For Women',
-            'Keshav Mahavidyalaya',
-            'Shyama Prasad Mukherjee College',
-            'Sri Guru Gobind Singh College',)
-     
-     South=('Acharya Narendra Dev College',
-            'Atma Ram Sanatan Dharam College',
-            'Deen Dayal Upadhyaya College',
-            'Deshbandhu College (Day) ',
-            'Dyal Singh College (Day)',
-            'Gargi College',
-            'Maitreyi College   ',
-            'Moti Lal Nehru College (Day) ',
-            'Sri Aurobindo College (Day)',
-            'Bhaskaracharya College of Appli',
-            'College Of Vocational Studies',
-            'Ramanujan College',
-            'P.G.D.A.V. College (Day)',
-            'Ram Lal Anand College (Day)',
-            'Aryabhatta College Formerly Ram',
-            'Shaheed Rajguru College of Appl',
-            'Shaheed Sukhdev College of Busi')
-                                                
-     writer=pd.ExcelWriter(""+crs+str(year)+str(sem)+"rank.xlsx")
-     for i in ("All","South","North"):
-         if i == "South":
-             DF=Df[np.in1d(Df.index.get_level_values(0),South)]
-         elif i=="North":
-             DF=Df[np.in1d(Df.index.get_level_values(0),North)]
-         else :
-             DF=Df 
-         DF=DF.iloc[:100]
-         #DF=DF.assign(Rank=range(1,101))
-         DF.to_excel(writer,sheet_name=i)
-     writer.save()

@@ -12,7 +12,6 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 from tkscrolledframe import ScrolledFrame
 from Data import getdetails, getcourse, get_rank, get_studentReport, studentreport, pdfupload
 from tkinter.filedialog import askopenfilename
-import math
 
 
 #function for all comboboxes on tha pages
@@ -417,7 +416,7 @@ class StudentPage(tk.Frame):
                 top1.geometry("700x500")
                 top1.configure(bg='white')
                 top1.resizable(0,0)
-                top1.grab_set()
+                
                 
                 tk.Label(top1, text="Error In :"+str(values), bg='white', font=("Helvetica", 14)).place(x=20, y=50)
                 
@@ -574,7 +573,7 @@ class StudentPage(tk.Frame):
             top1.configure(bg='white')
             # disabling resize option
             top1.resizable(0,0)
-            top1.grab_set()     # opens up only one toplevel window at a time
+            #top1.grab_set()     # opens up only one toplevel window at a time
             
             sem_a="Semester "+str(a)
             tk.Label(top1, text=sem_a, font=("Helvetica", 12), bg='white').place(x=30, y=132)
@@ -829,7 +828,7 @@ class Course(tk.Frame):
             top1.geometry("970x650")
             top1.configure(bg='white')
             top1.resizable(0,0)
-            top1.grab_set()
+            
             
             cr["Sub_W"][hehe].figure.set_figheight(8.6)
             cr["Sub_W"][hehe].figure.set_figwidth(13)
@@ -858,7 +857,7 @@ class Course(tk.Frame):
             top1.geometry("970x650")
             top1.configure(bg='white')
             top1.resizable(0,0)
-            top1.grab_set()
+            
             
             cr[txt].set_figheight(8.6)
             cr[txt].set_figwidth(13)
@@ -885,7 +884,6 @@ class Course(tk.Frame):
             top1.geometry("970x650")
             top1.configure(bg='white')
             top1.resizable(0,0)
-            top1.grab_set()
             
             cr[txt].figure.set_figheight(8.6)
             cr[txt].figure.set_figwidth(13)
@@ -1224,6 +1222,25 @@ class Upload(tk.Frame):
         instr(10,20, 723)
         instr(20,30, 823)
         
+        def sample():
+            top=tk.Toplevel()
+            top.title("Sample Form of File")
+            top.configure(bg='white')
+            top.resizable(0,0)
+            top.geometry("1250x600")
+            
+            sample=Image.open("Screenshots/Sample.png").resize((1250,800))
+            my_image_sample=ImageTk.PhotoImage(sample, master=top)
+            my_label_sample=tk.Label(top, image=my_image_sample, bd=0, bg="#F6F8FB")
+            my_label_sample.sample=my_image_sample
+            my_label_sample.place(x=0, y=0)
+            
+            top.mainloop()
+            
+        
+        tk.Label(self, text="To see a sample file format:", font=("Helvetica",14),bg="#F6F8FB").place(x=623, y=370)
+        tk.Button(self, text="Click here", font=("Helvetica",10),bg="#F6F8FB", fg="Blue", relief=tk.FLAT, command=sample).place(x=623, y=395)
+        
         tk.Label(self, text='Upload Files', bg='white', font=("Roboto", 25), fg="black").place(x=135, y=110)
         
         self.v1 = tk.StringVar()
@@ -1258,7 +1275,6 @@ class Upload(tk.Frame):
                 top1.geometry("700x500")
                 top1.configure(bg='white')
                 top1.resizable(0,0)
-                top1.grab_set()
                 
                 tk.Label(top1, text=i, bg='white', font=("Helvetica", 14)).place(x=20, y=50)
                 tk.Label(top1, text="Following columns are missing:", bg='white', font=("Helvetica", 12)).place(x=30, y=100)

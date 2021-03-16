@@ -46,7 +46,7 @@ ___
 * The info button on the top provides the page information.
 * The upload button on the left toolbar takes us to the upload page, where the user can upload the result data of a course for analysis.
 * The Home Button take us to home page i.e. this very page.
-* >Rest all the buttons do not have any command specified, as the work on application is currently under development.
+* Rest all the buttons do not have any command specified, as the work on application is currently under development.
 
 <br>
 
