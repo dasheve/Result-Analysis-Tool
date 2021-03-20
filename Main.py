@@ -12,6 +12,8 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 from tkscrolledframe import ScrolledFrame
 from Data import getdetails, getcourse, get_rank, get_studentReport, studentreport, pdfupload
 from tkinter.filedialog import askopenfilename
+import sys
+import os
 
 
 #function for all comboboxes on tha pages
@@ -110,6 +112,29 @@ def TopLeftFrame(loc, x1, y1, pdx, pdy, wi, hi):
     frame_icon=tk.LabelFrame(loc, padx=pdx, pady=pdy, width=wi, height=hi, bg='white', bd=0)
     frame_icon.place(x=x1, y=y1)
     return frame_icon
+
+def bgimage(path, w, h, root, x1, y1 ):
+    """
+    Parameters----------
+    path : string
+           path of the image file
+    w : int
+        width of image in pixels
+    h : int
+        height of image in pixels
+    root : object
+           tkinter window 
+    x1 : int
+         x-coordinate 
+    y1 : int
+         y-coordinate
+    Returns : None
+    """
+    img=Image.open(path).resize((w,h))
+    my_img=ImageTk.PhotoImage(img, master=root)
+    my_label=tk.Label(root, image=my_img, bd=0, bg="#F6F8FB")
+    my_label.sample=my_img
+    my_label.place(x=x1, y=y1)
 
 class tkinterApp(tk.Tk): 
 
@@ -215,12 +240,8 @@ class  HomePage(tk.Frame):
         # button for settings page 
         icons(frame_icon, "settings.png", 4, 210, None)
         
-        # background image
-        main_image=Image.open("Images/backimage.png").resize((600,720))    
-        mainimg=ImageTk.PhotoImage(main_image, master=self)
-        my_label1=tk.Label(self, image=mainimg)
-        my_label1.image=mainimg
-        my_label1.place(x=680, y=0)
+        # image placement
+        bgimage("Images/backimage.png", 600, 720, self, 680, 0)
         
         # the default horizontal toolbar at the top
         frame_top=TopLeftFrame(self, 60, 0, 10, 0, 1220, 55)
@@ -312,10 +333,10 @@ class  HomePage(tk.Frame):
         
         # button to navigate to student selection page after selecting
         # values from the comboxes
-        buttons(self, "student_button.png", 135, 480, 170, 50, lambda : controller.showStudent2(args=self.c_values))
+        buttons(self, "student_button.png", 135, 480, 170, 50, lambda: self.warning('stu'))
         
         # button to navigate to Course Details page
-        buttons(self, "course_button.png", 328, 480, 170, 50, self.warning)
+        buttons(self, "course_button.png", 328, 480, 170, 50, lambda: self.warning('cou'))
 
         # button to navigate to Ranking page
         buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: controller.showStudent(args=self.c_values, cont=Ranking))
@@ -328,12 +349,14 @@ class  HomePage(tk.Frame):
         info_label1_button=tk.Button(self, text="Click Here", font=("Helvetica", 12), bg='#F6F8FB', fg='#FF6600', bd=0 )
         info_label1_button.place(x=340, y=618.45)
         
-    def warning(self):
-        print(getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],''))
+    def warning(self, txt):
         if self.c_values['college'] not in getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],''):
             tk.messagebox.showwarning("Course Not Found", "The selected course is not in the selected college.")
         else:
-            self.controller.showStudent(args=self.c_values, cont=Course)
+            if txt=='cou':
+                self.controller.showStudent(args=self.c_values, cont=Course)
+            elif txt=='stu':
+                self.controller.showStudent2(args=self.c_values)
             
     def callback1(self, *args): 
         """
@@ -409,7 +432,6 @@ class StudentPage(tk.Frame):
         # calling the required imported function and storing the
         # returned values in a variable
         s_r=get_studentReport(values["course"],values["year"],values["part"],values["college"],int(values["student"]) )
-        
         if s_r[0]['Fail']==True:
                 top1=tk.Toplevel()
                 top1.title("Error")
@@ -417,9 +439,13 @@ class StudentPage(tk.Frame):
                 top1.configure(bg='white')
                 top1.resizable(0,0)
                 
-                
-                tk.Label(top1, text="Error In :"+str(values), bg='white', font=("Helvetica", 14)).place(x=20, y=50)
-                
+                tk.Label(top1, text="Error IN:", bg="white", font=("Helvetica", 15)).place(x=20, y=50)
+                for i in values:
+                    tk.Label(top1, text=str(i)+" - ", bg='white', font=("Helvetica", 14)).place(x=20, y=100+list(values.values()).index(values[i])*40)
+                    tk.Label(top1, text=values[i], bg='white', font=("Helvetica", 14)).place(x=140, y=100+list(values.values()).index(values[i])*40)
+                tk.Label(top1, text="file - ", bg='white', font=("Helvetica", 14)).place(x=20, y=300)
+                tk.Label(top1, text=s_r[1]['path'], bg='white', font=("Helvetica", 14)).place(x=140, y=300)
+
             
         
         # the default vertical toolbar which enables to select from the given options        
@@ -527,16 +553,16 @@ class StudentPage(tk.Frame):
         
         # displaying percentage of each student
         def sem_perc(frame, sem, txt, x1, y1):
-             sem_perc=str(float("{:.2f}".format(s_r[sem]['perc'])))
+             sem_perc=str(float("{:.2f}".format((s_r[sem]['perc'])/10)))
              sem=str(txt+sem_perc)
              label_sem_perc=tk.Label(frame, text=sem, bg="#F6F8FB", font=('Helvetica, 13')).place(x=x1, y=y1)
             
         sem_perc(year1_frame, 1, "I                   ", 125, 20)
         sem_perc(year1_frame, 2, "II                  ", 124, 55)
         sem_perc(year2_frame, 3, "III                 ", 125, 20)
-        sem_perc(year2_frame, 4, "IV                 ", 125, 20)
+        sem_perc(year2_frame, 4, "IV                 ", 124, 55)
         sem_perc(year3_frame, 5, "V                  ", 125, 20)
-        sem_perc(year3_frame, 6, "VI                 ", 125, 20)
+        sem_perc(year3_frame, 6, "VI                 ", 124, 55)
         
         tk.Label(year1_frame, text=str(float("{:.2f}".format((s_r[1]['perc']/10+s_r[2]['perc']/10)/2))), bg="#F6F8FB", font=("Helvetica", 15)).place(x=317, y=30)
         tk.Label(year2_frame, text=str(float("{:.2f}".format((s_r[3]['perc']/10+s_r[4]['perc']/10)/2))), bg="#F6F8FB", font=("Helvetica", 15)).place(x=317, y=30)
@@ -596,19 +622,9 @@ class StudentPage(tk.Frame):
             top1.mainloop()
 
         # creating buttons to open semester plots        
-        img_expand=Image.open("Buttons/expand1.png").resize((75,25))
-        my_image_expand=ImageTk.PhotoImage(img_expand, master=self)
-        my_label_expand1=tk.Button(year1_frame, image=my_image_expand, bd=0, bg='#F6F8FB', command=lambda: toplevel(1,2))
-        my_label_expand1.image=my_image_expand
-        my_label_expand1.place(x=410, y=60)
-        
-        my_label_expand2=tk.Button(year2_frame, image=my_image_expand, bd=0, bg='#F6F8FB', command=lambda: toplevel(3,4))
-        my_label_expand2.image=my_image_expand
-        my_label_expand2.place(x=410, y=60)
-        
-        my_label_expand3=tk.Button(year3_frame, image=my_image_expand, bd=0, bg='#F6F8FB', command=lambda: toplevel(5,6))
-        my_label_expand3.expand=my_image_expand
-        my_label_expand3.place(x=410, y=60)
+        buttons(year1_frame, "expand1.png", 410, 60, 75, 25, lambda : toplevel(1,2))
+        buttons(year2_frame, "expand1.png", 410, 60, 75, 25, lambda : toplevel(3,4))
+        buttons(year3_frame, "expand1.png", 410, 60, 75, 25, lambda : toplevel(5,6))
         
         
 """
@@ -1027,12 +1043,8 @@ class  Ranking(tk.Frame):
         self.c_values['college']=None
         self.c_values.update(args)
         
-        # background image
-        background=Image.open("Images/Ranking_Page.jpg").resize((1210,700))
-        my_image_background=ImageTk.PhotoImage(background, master=self)
-        my_label_background=tk.Label(self, image=my_image_background)
-        my_label_background.background=my_image_background
-        my_label_background.place(x=60, y=55)
+        # background image        
+        bgimage("Images/Ranking_Page.jpg", 1210, 700, self, 60, 55)
         
         # the default vertical toolbar which enables to select from the given options       
         frame_icon=tk.LabelFrame(self, padx=10, pady=10, width=60, height=1024, bg='white', bd=0)
@@ -1168,12 +1180,8 @@ class Upload(tk.Frame):
         self.configure(bg="#F6F8FB")
         
         self.c_values=dict()
-        
-        background=Image.open("Images/Frame 1.png").resize((500,600))
-        my_image_background=ImageTk.PhotoImage(background, master=self)
-        my_label_background=tk.Label(self, image=my_image_background, bd=0, bg="#F6F8FB")
-        my_label_background.background=my_image_background
-        my_label_background.place(x=70, y=40)
+                
+        bgimage("Images/Frame 1.png", 500, 600, self, 70, 40)
         
         # the default vertical toolbar which enables to select from the given options       
         frame_icon=tk.LabelFrame(self, padx=10, pady=10, width=60, height=1024, bg='white', bd=0)
@@ -1187,9 +1195,17 @@ class Upload(tk.Frame):
 
         # button for user details
         icons(frame_icon, "user.png", 4, 60, None)
+        
+        def res(i):
+            if i=="home":
+                tk.messagebox.showinfo("Restart Required","The application will restart")
+            elif i=="upload":
+                tk.messagebox.showinfo("Success","File uploaded successfully, restart required.") 
+            python=sys.executable
+            os.execl(python, python, * sys.argv)
 
         # button to navigate to the homepage
-        icons(frame_icon, "home_alt_fill.jpg", 4, 110, lambda : controller.show_frame(HomePage))
+        icons(frame_icon, "home_alt_fill.jpg", 4, 110, lambda: res("home"))
 
         # button to navigate to the Upload page
         buttons(frame_icon, "Upload.png", 4, 160, 23, 23, lambda : controller.show_frame(Upload))
@@ -1207,7 +1223,7 @@ class Upload(tk.Frame):
         icons(frame_top, "info.png", 1110, 15, None)
         
         # button to navigate to the previous page        
-        icons(frame_top, "back.png", 10, 15, lambda: controller.show_frame(HomePage))
+        icons(frame_top, "back.png", 10, 15, res)
         
         tk.Label(self, text="Instructions - ", font=("Helvetica",16), bg="#F6F8FB").place(x=600,y=80)
         tk.Label(self, text="The file must contain following columns: ", font=("Helvetica",14), bg="#F6F8FB").place(x=620,y=110)
@@ -1229,11 +1245,7 @@ class Upload(tk.Frame):
             top.resizable(0,0)
             top.geometry("1250x600")
             
-            sample=Image.open("Screenshots/Sample.png").resize((1250,800))
-            my_image_sample=ImageTk.PhotoImage(sample, master=top)
-            my_label_sample=tk.Label(top, image=my_image_sample, bd=0, bg="#F6F8FB")
-            my_label_sample.sample=my_image_sample
-            my_label_sample.place(x=0, y=0)
+            bgimage("Screenshots/Sample.png", 1250, 800, top, 0, 0)
             
             top.mainloop()
             
@@ -1268,30 +1280,35 @@ class Upload(tk.Frame):
     def upload(self):
         self.c_values['course']=self.v1.get()
         aa=pdfupload(self.c_values['course'], self.c_values['year'], self.c_values['part'], self.v.get())
-        print(aa)
         for i in aa:
                 top1=tk.Toplevel()
-                top1.title("Columns Missing")
                 top1.geometry("700x500")
                 top1.configure(bg='white')
                 top1.resizable(0,0)
                 
-                tk.Label(top1, text=i, bg='white', font=("Helvetica", 14)).place(x=20, y=50)
-                tk.Label(top1, text="Following columns are missing:", bg='white', font=("Helvetica", 12)).place(x=30, y=100)
-                
-            
-                for j in aa[i]:
-                    tk.Label(top1, text=j, bg="white").place(x=50, y=140+(aa[i].index(j))*20)
+                if 'Error' not in i:
+                    top1.title("Error!")
+                    tk.Label(top1, text=i, bg='white', font=("Helvetica", 14)).place(x=20, y=50)
+                    tk.Label(top1, text="Following columns are missing:", bg='white', font=("Helvetica", 13)).place(x=25, y=100)
+                    for j in aa[i]:
+                        tk.Label(top1, text=j, bg='white', font=("Helvetica", 12)).place(x=20, y=150+aa[i].index(j)*40)
+                     
+                else:
+                    top1.title("File Creation Error")
+                    tk.Label(top1, text="Rank file cannot be created", bg='white', font=("Helvetica", 14)).place(x=20, y=50)
+                    for j in aa[i]:
+                        txt=str(int(aa[i].index(j)+1))+". "+j
+                        tk.Label(top1, text=txt, bg='white', font=("Helvetica", 13)).place(x=20, y=50+int(aa[i].index(j)+1)*50)
                 
         else:
-            self.controller.show_frame(HomePage)
+            self.res("upload")
             
         
     def callback1(self, *args): 
         self.year=self.year_combo.get()
         self.c_values['year']=self.year
         
-    def callback2(self, *args): 
+    def callback2(self, *args):
         self.part=self.part_combo.get()
         part_dict={'First Year':1, 'Second Year':2, 'Passout':3}
         self.c_values['part']=part_dict[self.part]

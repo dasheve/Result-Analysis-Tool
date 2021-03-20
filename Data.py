@@ -10,6 +10,7 @@ import matplotlib.patches as mpatches
 import math
 import pdfplumber
 import re
+import os
 
 def getdetails(crs,year,part,clg):
     #Change The src variables strings according to your storage
@@ -54,6 +55,8 @@ def studentreport(Df,rollno,sem=0):
  
 def get_studentReport(crs,year,part,clg,rollno):
    Df=pd.ExcelFile(""+crs+str(year)+str(part)+".xlsx" ,engine='openpyxl' ).parse(clg,index_col=[0,1])
+   file_name=""+crs+str(year)+str(part)+".xlsx"
+   path=os.path.abspath(file_name)
    #Df['Roll No']=Df['Roll No'].replace({" ":np.nan, "":np.nan}).fillna(method='ffill')
    Secondly=[]
    try:
@@ -61,7 +64,10 @@ def get_studentReport(crs,year,part,clg,rollno):
        for i in range(1,7):
            Secondly.append(studentreport(Df,rollno,i))
    except:
+       Secondly=[]
        Secondly.append({"Fail":True})
+       Secondly.append({"path":path})
+   print(Secondly)
    return Secondly
 
 def get_subw(Df,year):
@@ -93,7 +99,7 @@ def getcourse(crs,year,part,clg):
     src=""+crs+str(year)+str(part)+".xlsx"
     xls=pd.ExcelFile(src, engine="openpyxl")
     if clg in xls.sheet_names:
-        Df=xls.parse(clg,index_col=[0,2])
+        Df=xls.parse(clg,index_col=[0,1])
     else:
         return ["invalid college name"]
     res=dict()
@@ -266,12 +272,12 @@ def pdfupload(crs,year,part,path):
         for line in range(0,len(lpage)):
              if lpage[line].__contains__('CAMPUS'):
                  if lpage[line].__contains__(':'):
-                     College.append(lpage[line].split(':')[1].split("NORTH")[0].split("SOUTH")[0].rstrip())
+                     College.append(lpage[line].split(':')[1].split("NORTH")[0].split("SOUTH")[0].strip())
                  else:
-                     College.append(lpage[line-1].split(':')[1].split("NORTH")[0].split("SOUTH")[0].rstrip())
+                     College.append(lpage[line-1].split(':')[1].split("NORTH")[0].split("SOUTH")[0].strip())
                  del line
                  break
- 
+        
         if (College[len(College)-1]!=College[len(College)-2])|(len(College)==1):
              if len(College)!=1:
                  for i in range(2,len(ws['A']),sem):
@@ -370,7 +376,7 @@ def pdfupload(crs,year,part,path):
  
     res=columns(file2)
     coll=list() 
-    college_file1=open("Colleges.txt","r+")
+    college_file1=open("Files/Colleges.txt","r+")
     lines=college_file1.readlines()
     coll=[i.strip() for i in lines]
     for i in getdetails(crs, year, part, ""):
@@ -379,14 +385,14 @@ def pdfupload(crs,year,part,path):
     colls=[i+"\n" for i in coll]
     colls[-1]=colls[-1].strip()
     college_file1.close()
-    colleg=open("Colleges.txt","w")
+    colleg=open("Files/Colleges.txt","w")
     for i in colls:
         colleg.write(i)
     colleg.close()
     
     
     course=list()
-    course_file=open("Courses.txt", "r+")
+    course_file=open("Files/Courses.txt", "r+")
     line=course_file.readlines()
     course=[i.strip() for i in line]
     if crs not in course: 
@@ -394,14 +400,14 @@ def pdfupload(crs,year,part,path):
     courses=[i+"\n" for i in course]
     courses[-1]=courses[-1].strip()
     course_file.close()
-    cou=open("Courses.txt", "w")
+    cou=open("Files/Courses.txt", "w")
     for i in courses:
         cou.write(i)
     cou.close()
     try:
         create_rank(crs,year,part)
     except TypeError:
-        res['TypeError']=['Some the columns might have merged togethe','The SGPA Row might have wrong data','Please Ensure the credibility of the data before further use']
+        res['TypeError']=['Some of the columns might have merged together.','The SGPA row might have wrong data.','Please ensure the credibility of the data before further use.']
         
     if not bool(res):
         res['result']=["Successfully uploaded files"]
@@ -416,9 +422,10 @@ def columns(path):
             b=df.columns
             #print("the sheet "+i+"there is :")
             b=list(b)
-            ls="Roll No SEM Name    Sub GR  GP  CRP Sub.1   GR.1    GP.1    CRP.1   Sub.2   GR.2    GP.2    CRP.2   Sub.3   GR.3    GP.3    CRP.3   Sub.4   GR.4    GP.4    CRP.4   TOT CR  TOT CRP SGPA    CGPA    Result  GR.CGPA DIV"
-            a=ls.split("\t")
-            dict1[i]=check_column_name(a, b)
+            b[1],b[2]=b[2],b[1]
+            df=df[b]
+            ls=["Roll No", "SEM", "Name", "Sub", "GR", "GP", "CRP", "Sub.1", "GR.1", "GP.1", "CRP.1", "Sub.2", "GR.2", "GP.2", "CRP.2", "Sub.3", "GR.3", "GP.3", "CRP.3", "Sub.4", "GR.4", "GP.4", "CRP.4", "TOT CR", "TOT CRP", "SGPA", "CGPA", "Result", "GR.CGPA", "DIV"]
+            dict1[i]=check_column_name(ls, b)
     return dict1
     
 def check_column_name(a,b):
