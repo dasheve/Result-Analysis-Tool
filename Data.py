@@ -11,6 +11,7 @@ import math
 import pdfplumber
 import re
 import os
+import shutil
 
 def getdetails(crs,year,part,clg):
     #Change The src variables strings according to your storage
@@ -415,8 +416,9 @@ def pdfupload(crs,year,part,path):
 
 def columns(path):
     dict1=dict()
-    xls=pd.ExcelFile(path, engine="openpyxl")
-    xls=pd.ExcelFile(path, engine="openpyxl")
+    shutil.copy(path, "i"+path)
+    xls=pd.ExcelFile("i"+path, engine="openpyxl")
+    xls1=pd.ExcelWriter(path, engine="openpyxl")
     for i in xls.sheet_names:
             df=pd.read_excel(xls, sheet_name=i, engine="openpyxl")
             b=df.columns
@@ -426,6 +428,9 @@ def columns(path):
             df=df[b]
             ls=["Roll No", "SEM", "Name", "Sub", "GR", "GP", "CRP", "Sub.1", "GR.1", "GP.1", "CRP.1", "Sub.2", "GR.2", "GP.2", "CRP.2", "Sub.3", "GR.3", "GP.3", "CRP.3", "Sub.4", "GR.4", "GP.4", "CRP.4", "TOT CR", "TOT CRP", "SGPA", "CGPA", "Result", "GR.CGPA", "DIV"]
             dict1[i]=check_column_name(ls, b)
+            df=df.reindex(df["Roll No", "SEM"])
+            df.to_excel(xls1, sheet_name=i, engine="openpyxl")
+    xls1.save()
     return dict1
     
 def check_column_name(a,b):

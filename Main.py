@@ -1314,7 +1314,7 @@ class Upload(tk.Frame):
         self.c_values['part']=part_dict[self.part]
         
 def main():
-    app = tkinterApp() 
+    app = tkinterApp()
     app.mainloop()
     
 if __name__=='__main__':
