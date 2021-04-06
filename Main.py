@@ -344,7 +344,7 @@ class  HomePage(tk.Frame):
         buttons(self, "course_button.png", 328, 480, 170, 50, lambda: self.warning('cou'))
 
         # button to navigate to Ranking page
-        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: controller.showStudent(args=self.c_values, cont=Ranking))
+        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: self.warning("rank"))
 
         # setting some default text
         info_label1=tk.Label(self, text="Wanna Know More?", font=("Helvetica", 12), bg='#F6F8FB', fg='Black' )
@@ -356,7 +356,7 @@ class  HomePage(tk.Frame):
         
     def warning(self, txt):
             if getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],'')=="FileError":
-                tk.messagebox.showwarning("File Not Found", "File does not exist. Please upload the required file.")
+                tk.messagebox.showwarning("File Not Found", "Either the file does not exist or the selected course is not in the selected college. Please upload the required file.")
             else:
                 if self.c_values['college'] not in getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],''):
                     tk.messagebox.showwarning("Course Not Found", "The selected course is not in the selected college.")
@@ -365,6 +365,9 @@ class  HomePage(tk.Frame):
                         self.controller.showStudent(args=self.c_values, cont=Course)
                     elif txt=='stu':
                         self.controller.showStudent2(args=self.c_values)
+                    elif txt=="rank":
+                        self.controller.showStudent(args=self.c_values, cont=Ranking)
+                        
             
     def callback1(self, *args): 
         """
@@ -428,7 +431,7 @@ class StudentPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller=controller
         self.parent=parent
-        
+         
         # setting the background color of the frame
         self.configure(bg='#F6F8FB')
         
@@ -439,7 +442,7 @@ class StudentPage(tk.Frame):
         
         # calling the required imported function and storing the
         # returned values in a variable
-        s_r=get_studentReport(values["course"],values["year"],values["part"],values["college"],int(values["student"]) )
+        s_r=get_studentReport(values["course"],values["year"],values["part"],values["college"],values["student"])
         if s_r[0]['Fail']==True:
                 top1=tk.Toplevel()
                 top1.title("Error")

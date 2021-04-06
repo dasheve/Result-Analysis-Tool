@@ -150,7 +150,7 @@ def get_rank(crs,year,part=3,clg=None,campus='All'):
          Df=pd.read_excel(src,sheet_name=campus,index_col=[0,1])
      except:
          return {"FileError":"The rank file cannot be created", "Fail":True}
-     res=dict()
+     res={"Fail":False}
      plt.close()
      if clg :
           Df=Df.filter(like=clg,axis=0)
