@@ -16,7 +16,10 @@ import shutil
 def getdetails(crs,year,part,clg):
     #Change The src variables strings according to your storage
     src=""+crs+str(year)+str(part)+".xlsx"
-    xls=pd.ExcelFile(src, engine='openpyxl')
+    try:
+        xls=pd.ExcelFile(src, engine='openpyxl')
+    except:
+        return "FileError"
     if clg=='':
         return xls.sheet_names
     elif clg in xls.sheet_names:
@@ -80,7 +83,7 @@ def get_subw(Df,year):
          try:
              SubW=pd.concat([SubW,DF.groupby(i)[j].mean()])
          except:
-             return {"DataError":['Quite Possible that one the GP columns have wrong data in this particular sheet. Please proceed to changes accordingly.']}
+             return {"DataError":"Quite Possible that one the GP columns have wrong data in the particular file.\n Please proceed to changes accordingly.", "Fail":True}
     SubW=SubW.reset_index()
     SubW=SubW.groupby('index').mean().squeeze().sort_values()
     SubW.dropna(inplace=True)
@@ -103,7 +106,7 @@ def getcourse(crs,year,part,clg):
         Df=xls.parse(clg,index_col=[0,1])
     else:
         return ["invalid college name"]
-    res=dict()
+    res={"Fail":False}
     Df.replace(0,np.nan,regex=True)
     for _,value in Df[Df.columns[Df.columns.str.startswith("Sub")]].iteritems():
         Df[value.name]=Df[value.name].astype(str).str.slice(0,8)
@@ -143,7 +146,10 @@ def getcourse(crs,year,part,clg):
 
 def get_rank(crs,year,part=3,clg=None,campus='All'):
      src=''+crs+str(year)+str(part)+"rank.xlsx"
-     Df=pd.read_excel(src,sheet_name=campus,index_col=[0,1])
+     try:
+         Df=pd.read_excel(src,sheet_name=campus,index_col=[0,1])
+     except:
+         return {"FileError":"The rank file cannot be created", "Fail":True}
      res=dict()
      plt.close()
      if clg :
@@ -428,7 +434,7 @@ def columns(path):
             df=df[b]
             ls=["Roll No", "SEM", "Name", "Sub", "GR", "GP", "CRP", "Sub.1", "GR.1", "GP.1", "CRP.1", "Sub.2", "GR.2", "GP.2", "CRP.2", "Sub.3", "GR.3", "GP.3", "CRP.3", "Sub.4", "GR.4", "GP.4", "CRP.4", "TOT CR", "TOT CRP", "SGPA", "CGPA", "Result", "GR.CGPA", "DIV"]
             dict1[i]=check_column_name(ls, b)
-            df=df.reindex(df["Roll No", "SEM"])
+            df=df.set_index(["Roll No", "SEM"])
             df.to_excel(xls1, sheet_name=i, engine="openpyxl")
     xls1.save()
     return dict1

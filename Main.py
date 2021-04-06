@@ -14,6 +14,11 @@ from Data import getdetails, getcourse, get_rank, get_studentReport, studentrepo
 from tkinter.filedialog import askopenfilename
 import sys
 import os
+import webbrowser
+
+url="https://github.com/dasheve/Result-Analysis-Tool#readme"
+def openweb():
+    webbrowser.open(url, new=1)
 
 
 #function for all comboboxes on tha pages
@@ -152,7 +157,7 @@ class tkinterApp(tk.Tk):
         self.container.grid_rowconfigure(0, weight = 1)
         self.container.grid_columnconfigure(0, weight = 1) 
         
-        # initializing frames to an empty array 
+        # initializing frames to an empty array
         self.frames = {}
         
         # iterating through a tuple consisting 
@@ -334,29 +339,34 @@ class  HomePage(tk.Frame):
         # button to navigate to student selection page after selecting
         # values from the comboxes
         buttons(self, "student_button.png", 135, 480, 170, 50, lambda: self.warning('stu'))
-        
+            
         # button to navigate to Course Details page
         buttons(self, "course_button.png", 328, 480, 170, 50, lambda: self.warning('cou'))
 
         # button to navigate to Ranking page
-        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: controller.showStudent(args=self.c_values, cont=Ranking))
+        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: self.warning("rank"))
 
         # setting some default text
         info_label1=tk.Label(self, text="Wanna Know More?", font=("Helvetica", 12), bg='#F6F8FB', fg='Black' )
         info_label1.place(x=195, y=620)
         
         # button to know more about the functioning of the app
-        info_label1_button=tk.Button(self, text="Click Here", font=("Helvetica", 12), bg='#F6F8FB', fg='#FF6600', bd=0 )
+        info_label1_button=tk.Button(self, text="Click Here", font=("Helvetica", 12), bg='#F6F8FB', fg='#FF6600', bd=0, command=openweb)
         info_label1_button.place(x=340, y=618.45)
         
     def warning(self, txt):
-        if self.c_values['college'] not in getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],''):
-            tk.messagebox.showwarning("Course Not Found", "The selected course is not in the selected college.")
-        else:
-            if txt=='cou':
-                self.controller.showStudent(args=self.c_values, cont=Course)
-            elif txt=='stu':
-                self.controller.showStudent2(args=self.c_values)
+            if getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],'')=="FileError":
+                tk.messagebox.showwarning("File Not Found", "File does not exist. Please upload the required file.")
+            else:
+                if self.c_values['college'] not in getdetails(self.c_values['course'],self.c_values['year'], self.c_values['part'],''):
+                    tk.messagebox.showwarning("Course Not Found", "The selected course is not in the selected college.")
+                else:
+                    if txt=='cou':
+                        self.controller.showStudent(args=self.c_values, cont=Course)
+                    elif txt=='stu':
+                        self.controller.showStudent2(args=self.c_values)
+                    elif txt=='rank':
+                        self.controller.showStudent(args=self.c_values, cont=Ranking)
             
     def callback1(self, *args): 
         """
@@ -754,6 +764,17 @@ class Course(tk.Frame):
         self.values=args
         cr=getcourse(self.values['course'],self.values['year'],self.values['part'],self.values['college'])
 
+        if cr['Fail']==True:
+                top1=tk.Toplevel()
+                top1.title("Error")
+                top1.geometry("700x500")
+                top1.configure(bg='white')
+                top1.resizable(0,0)
+                
+                tk.Label(top1, text="DataError:", bg="white", font=("Helvetica", 14)).place(x=20, y=50)
+                tk.Label(top1, text=cr["DataError"], bg="white", font=("Helvetica", 14)).place(x=20, y=90)
+
+        
         # the default vertical toolbar which enables to select from the given options       
         frame_icon=tk.LabelFrame(self, padx=10, pady=10, width=60, height=1024, bg='white', bd=0)
         frame_icon.place(x=0, y=0)
@@ -1097,7 +1118,21 @@ class  Ranking(tk.Frame):
         # getting the ranking data and setting the 
         # no. of rows and columns to be shown 
         # in the table
+        
         data=get_rank(self.c_values["course"],self.c_values['year'],3,self.c_values['college'], self.c_values['campus'])
+        
+        if data["Fail"]==True:
+            top1=tk.Toplevel()
+            top1.title("Error")
+            top1.geometry("700x500")
+            top1.configure(bg='white')
+            top1.resizable(0,0)
+            
+            tk.Label(top1, text="FileError:", bg="white", font=("Helvetica", 14)).place(x=20, y=50)
+            tk.Label(top1, text=data["FileError"], bg="white", font=("Helvetica", 14)).place(x=20, y=90)
+            tk.Label(top1, text="Check and correct the uploaded result file in the path.", bg="white", font=("Helvetica", 14)).place(x=20, y=130)
+
+        
         rank_data=data["df"]
         ro=len(rank_data)
         colum=len(rank_data.columns)+2
