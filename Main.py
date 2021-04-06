@@ -344,7 +344,7 @@ class  HomePage(tk.Frame):
         buttons(self, "course_button.png", 328, 480, 170, 50, lambda: self.warning('cou'))
 
         # button to navigate to Ranking page
-        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: self.warning("rank"))
+        buttons(self, "ranking_button.png", 135, 540, 170, 50, lambda: controller.showStudent(args=self.c_values, cont=Ranking))
 
         # setting some default text
         info_label1=tk.Label(self, text="Wanna Know More?", font=("Helvetica", 12), bg='#F6F8FB', fg='Black' )
@@ -365,8 +365,6 @@ class  HomePage(tk.Frame):
                         self.controller.showStudent(args=self.c_values, cont=Course)
                     elif txt=='stu':
                         self.controller.showStudent2(args=self.c_values)
-                    elif txt=='rank':
-                        self.controller.showStudent(args=self.c_values, cont=Ranking)
             
     def callback1(self, *args): 
         """
@@ -455,7 +453,6 @@ class StudentPage(tk.Frame):
                     tk.Label(top1, text=values[i], bg='white', font=("Helvetica", 14)).place(x=140, y=100+list(values.values()).index(values[i])*40)
                 tk.Label(top1, text="file - ", bg='white', font=("Helvetica", 14)).place(x=20, y=300)
                 tk.Label(top1, text=s_r[1]['path'], bg='white', font=("Helvetica", 14)).place(x=140, y=300)
-
             
         
         # the default vertical toolbar which enables to select from the given options        
@@ -1234,8 +1231,6 @@ class Upload(tk.Frame):
         def res(i):
             if i=="home":
                 tk.messagebox.showinfo("Restart Required","The application will restart")
-            elif i=="upload":
-                tk.messagebox.showinfo("Success","File uploaded successfully, restart required.") 
             python=sys.executable
             os.execl(python, python, * sys.argv)
 
@@ -1288,6 +1283,9 @@ class Upload(tk.Frame):
         tk.Label(self, text="To see a sample file format:", font=("Helvetica",14),bg="#F6F8FB").place(x=623, y=370)
         tk.Button(self, text="Click here", font=("Helvetica",10),bg="#F6F8FB", fg="Blue", relief=tk.FLAT, command=sample).place(x=623, y=395)
         
+        tk.Label(self, text="Upload will take some time depending on the file size.", font=("Helvetica",14),bg="#F6F8FB").place(x=623, y=450)
+
+        
         tk.Label(self, text='Upload Files', bg='white', font=("Roboto", 25), fg="black").place(x=135, y=110)
         
         self.v1 = tk.StringVar()
@@ -1315,7 +1313,8 @@ class Upload(tk.Frame):
     def upload(self):
         self.c_values['course']=self.v1.get()
         aa=pdfupload(self.c_values['course'], self.c_values['year'], self.c_values['part'], self.v.get())
-        for i in aa:
+        dict1={list(aa.keys())[0]:list(aa.values())[0], list(aa.keys())[-1]:list(aa.values())[-1]}
+        for i in dict1:
                 top1=tk.Toplevel()
                 top1.geometry("700x500")
                 top1.configure(bg='white')
@@ -1327,16 +1326,20 @@ class Upload(tk.Frame):
                     tk.Label(top1, text="Following columns are missing:", bg='white', font=("Helvetica", 13)).place(x=25, y=100)
                     for j in aa[i]:
                         tk.Label(top1, text=j, bg='white', font=("Helvetica", 12)).place(x=20, y=150+aa[i].index(j)*40)
-                     
+                    tk.Label(top1, text="Check the entire file for missing columns.", bg='white', font=("Helvetica", 13)).place(x=300, y=100)
+
                 else:
                     top1.title("File Creation Error")
                     tk.Label(top1, text="Rank file cannot be created", bg='white', font=("Helvetica", 14)).place(x=20, y=50)
                     for j in aa[i]:
                         txt=str(int(aa[i].index(j)+1))+". "+j
                         tk.Label(top1, text=txt, bg='white', font=("Helvetica", 13)).place(x=20, y=50+int(aa[i].index(j)+1)*50)
+                        
+  
+        tk.messagebox.showinfo("Success","File uploaded successfully with errors! It needs manual corrrection. Search for the uploaded excel file in folder of the application and edit it. Check the opened top-level windows of the application for possible errors. Restart required at this stage.")
+        python=sys.executable
+        os.execl(python, python, * sys.argv)
                 
-        else:
-            self.res("upload")
             
         
     def callback1(self, *args): 
