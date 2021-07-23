@@ -5,7 +5,6 @@ from openpyxl import Workbook
 import numpy as np
 from matplotlib import pyplot
 import seaborn as sns
-from matplotlib import cm
 import matplotlib.patches as mpatches
 import math
 import pdfplumber
@@ -15,7 +14,7 @@ import shutil
 
 def getdetails(crs,year,part,clg):
     #Change The src variables strings according to your storage
-    src=""+crs+str(year)+str(part)+".xlsx"
+    src="ExcelFiles/"+crs+str(year)+str(part)+".xlsx"
     try:
         xls=pd.ExcelFile(src, engine='openpyxl')
     except:
@@ -58,8 +57,8 @@ def studentreport(Df,rollno,sem=0):
     return res
  
 def get_studentReport(crs,year,part,clg,rollno):
-   Df=pd.ExcelFile(""+crs+str(year)+str(part)+".xlsx" ,engine='openpyxl' ).parse(clg,index_col=[0,1])
-   file_name=""+crs+str(year)+str(part)+".xlsx"
+   Df=pd.ExcelFile("ExcelFiles/"+crs+str(year)+str(part)+".xlsx" ,engine='openpyxl' ).parse(clg,index_col=[0,1])
+   file_name="ExcelFiles/"+crs+str(year)+str(part)+".xlsx"
    path=os.path.abspath(file_name)
    #Df['Roll No']=Df['Roll No'].replace({" ":np.nan, "":np.nan}).fillna(method='ffill')
    Secondly=[]
@@ -100,7 +99,7 @@ def get_subw(Df,year):
  
  
 def getcourse(crs,year,part,clg):
-    src=""+crs+str(year)+str(part)+".xlsx"
+    src="ExcelFiles/"+crs+str(year)+str(part)+".xlsx"
     xls=pd.ExcelFile(src, engine="openpyxl")
     if clg in xls.sheet_names:
         Df=xls.parse(clg,index_col=[0,1])
@@ -145,7 +144,7 @@ def getcourse(crs,year,part,clg):
     return res
 
 def get_rank(crs,year,part=3,clg=None,campus='All'):
-     src=''+crs+str(year)+str(part)+"rank.xlsx"
+     src="ExcelFiles/"+crs+str(year)+str(part)+"rank.xlsx"
      try:
          Df=pd.read_excel(src,sheet_name=campus,index_col=[0,1])
      except:
@@ -180,7 +179,7 @@ def get_rank(crs,year,part=3,clg=None,campus='All'):
      res["df"]=Df
      return res
 def create_rank(crs,year,sem):
-     src=""+crs+str(year)+str(sem)+".xlsx"
+     src="ExcelFiles/"+crs+str(year)+str(sem)+".xlsx"
      Df=pd.concat(pd.read_excel(src,sheet_name=None, engine="openpyxl"),axis=0)
      Df["GR.CGPA"]=np.nan
      for _,i in Df[Df['Name'].notnull()].iterrows():
@@ -230,7 +229,7 @@ def create_rank(crs,year,sem):
             'Shaheed Rajguru College of Appl',
             'Shaheed Sukhdev College of Busi')
      print(Df)                          
-     writer=pd.ExcelWriter(""+crs+str(year)+str(sem)+"rank.xlsx")
+     writer=pd.ExcelWriter("ExcelFiles/"+crs+str(year)+str(sem)+"rank.xlsx")
      for i in ("All","South","North"):
          if i == "South":
              DF=Df[np.in1d(Df.index.get_level_values(0),South)]
@@ -267,7 +266,7 @@ def pdfupload(crs,year,part,path):
     roll=''
     sem=part*2
     cur_sem=1
-    file2=''+crs+str(year)+str(part)+'.xlsx'
+    file2='ExcelFiles/'+crs+str(year)+str(part)+'.xlsx'
     wb = Workbook()
     pdf=pdfplumber.open(path)
     College=[]
@@ -422,8 +421,11 @@ def pdfupload(crs,year,part,path):
 
 def columns(path):
     dict1=dict()
-    shutil.copy(path, "i"+path)
-    xls=pd.ExcelFile("i"+path, engine="openpyxl")
+    path_list=list(path)
+    path_list.insert(11,"i")
+    pathe="".join(path_list)
+    shutil.copy(path, pathe)
+    xls=pd.ExcelFile(pathe, engine="openpyxl")
     xls1=pd.ExcelWriter(path, engine="openpyxl")
     for i in xls.sheet_names:
             df=pd.read_excel(xls, sheet_name=i, engine="openpyxl")

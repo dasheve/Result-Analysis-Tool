@@ -1,27 +1,38 @@
-
 #Importing necessary libraries
 # details of each column
 # screenshot of format
 
+
+# Python packages import 
 import tkinter as tk
 from tkinter import ttk
 from PIL import ImageTk, Image
-import pandas as pd
-import openpyxl
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from tkscrolledframe import ScrolledFrame
-from Data import getdetails, getcourse, get_rank, get_studentReport, studentreport, pdfupload
 from tkinter.filedialog import askopenfilename
 import sys
 import os
 import webbrowser
+from datetime import date
+
+# local package import from file Data.py
+from Data import getdetails, getcourse, get_rank, get_studentReport, studentreport, pdfupload
+
 
 url="https://github.com/dasheve/Result-Analysis-Tool#readme"
 def openweb():
     webbrowser.open(url, new=1)
+    
+# Getting a list of years
 
+def years():
+    year_list=list()
+    current_year=date.today().year
+    for year in range(current_year-5,current_year+5):
+        year_list.append(year)
+    return year_list
 
-#function for all comboboxes on tha pages
+#function for all comboboxes on the pages
 def combobox(loc, val, default, x1, y1, call):    
     '''
     Parameters----------
@@ -331,7 +342,7 @@ class  HomePage(tk.Frame):
         self.course_combo=combobox(self, open_file("Files/Courses.txt"), "Choose Course", 135, 300, self.callback2)
         
         # Combobox for selection of Year
-        self.year_combo=combobox(self, ['2019'], "Choose Year", 135, 360, self.callback3)
+        self.year_combo=combobox(self, years(), "Choose Year", 135, 360, self.callback3)
 
         # Combobox for selection of Part
         self.part_combo=combobox(self, ['First Year', 'Second Year','Passout'], "Choose Course Year", 135, 420, self.callback4)
@@ -1296,7 +1307,7 @@ class Upload(tk.Frame):
         
         entry1 = tk.Entry(self, textvariable=self.v1, width=30, relief=tk.GROOVE, bg="white", font=("Helvetica",16), exportselection=0).place(x=135, y=200)        
         
-        self.year_combo=combobox(self, ['2019'], "Choose Year", 135, 260, self.callback1)
+        self.year_combo=combobox(self, years(), "Choose Year", 135, 260, self.callback1)
 
         self.part_combo=combobox(self, ['First Year', 'Second Year','Passout'], "Choose Course Part", 135, 320, self.callback2)
 
@@ -1314,6 +1325,7 @@ class Upload(tk.Frame):
         self.c_values['course']=self.v1.get()
         
     def upload(self):
+       try:
         self.c_values['course']=self.v1.get()
         aa=pdfupload(self.c_values['course'], self.c_values['year'], self.c_values['part'], self.v.get())
         dict1={list(aa.keys())[0]:list(aa.values())[0], list(aa.keys())[-1]:list(aa.values())[-1]}
@@ -1339,11 +1351,13 @@ class Upload(tk.Frame):
                         tk.Label(top1, text=txt, bg='white', font=("Helvetica", 13)).place(x=20, y=50+int(aa[i].index(j)+1)*50)
                         
   
-        tk.messagebox.showinfo("Success","File uploaded successfully with errors! It needs manual corrrection. Search for the uploaded excel file in folder of the application and edit it. Check the opened top-level windows of the application for possible errors. Restart required at this stage.")
+        tk.messagebox.showinfo("Success","File uploaded successfully with errors! It needs manual corrrection. Search for the uploaded excel file in a folder named ExcelFiles in the root folder of the application and edit it. Check the opened top-level windows of the application for possible errors. Restart required at this stage.")
         python=sys.executable
         os.execl(python, python, * sys.argv)
+       except:
+                   tk.messagebox.showinfo("Error","PLease browse and select a file first.")
+
                 
-            
         
     def callback1(self, *args): 
         self.year=self.year_combo.get()
