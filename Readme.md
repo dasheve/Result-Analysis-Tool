@@ -39,7 +39,7 @@ ___
 
 <br>
 
->![HomePage](Screenshots/HomePage.png)
+>![HomePage](./Screenshots/HomePage.png)
 
 * This is the landing page of the application.
 * Here, a user can choose different values for the provided options and go for the required data i.e. of particular student, of the entire course and/or to get the ranking of the students of the selected course of the selected college among the students of the university by clicking on the buttons provided.
