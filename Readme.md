@@ -115,8 +115,8 @@ This entire application is based on the fact that a csv file must be uploaded, t
 
 # Contributors
 
-1. Himanshu Singh
+1. Sushant Sharma
 2. Devesh Yadav
-3. Sushant Sharma
+3. Jasveer Singh Yadav
 
 **Acharya Narendra Dev College, University of Delhi**
